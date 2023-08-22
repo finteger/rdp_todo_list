@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:weather/weather.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -9,20 +8,26 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-Future<List<Weather>> getData() async {
-  String? cityName = 'Red Deer, CA';
-  WeatherFactory wf = WeatherFactory("ce8eb3004b0dcfd8664bd52d8f1eae78");
-  List<Weather> forecast = await wf.fiveDayForecastByCityName(cityName);
-  return forecast;
-}
-
 class _MyHomePageState extends State<MyHomePage> {
   final List<String> tasks = <String>[];
   final List<bool> checkboxes = List.generate(8, (index) => false);
 
-  CalendarFormat _calendarFormat = CalendarFormat.week;
+  //table_calendar configuration
+  CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
+
+  TextEditingController nameController = TextEditingController();
+
+  //To close keyboard after ENTER
+  FocusNode _textFieldFocusNode = FocusNode();
+
+  //Clear the input text field;
+  void clearTextField() {
+    setState(() {
+      nameController.clear();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,42 +74,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     }),
               ),
             ),
-            Center(
-              child: FutureBuilder<List<Weather>>(
-                future: getData(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else if (snapshot.hasData) {
-                    List<Weather> forecast = snapshot.data!;
-
-                    // Extracting weather, temperature, and wind information
-                    Weather firstWeather = forecast[0];
-                    String city = "Red Deer, CA";
-                    String? weatherCondition = firstWeather.weatherMain;
-                    double? temperature = firstWeather.temperature?.celsius;
-                    double? windSpeed = firstWeather.windSpeed;
-
-                    return Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start, // Align text to the left
-                      children: [
-                        Text('$city',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text('Weather Condition: $weatherCondition'),
-                        Text('Temperature: $temperature °C'),
-                        Text('Wind Speed: $windSpeed m/s'),
-                      ],
-                    );
-                  } else {
-                    return Text('No data available');
-                  }
-                },
-              ),
-            ),
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.all(4),
@@ -133,6 +102,55 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(top: 12, left: 25, right: 25),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      child: TextField(
+                        controller: nameController,
+                        focusNode: _textFieldFocusNode,
+                        style: TextStyle(fontSize: 18),
+                        maxLength: 20,
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.all(16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          labelText: 'Add To-Do List Item',
+                          labelStyle: TextStyle(
+                            fontSize: 16,
+                            color: Colors.blue,
+                          ),
+                          hintText: 'Enter your task here',
+                          hintStyle:
+                              TextStyle(fontSize: 16, color: Colors.grey),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide:
+                                BorderSide(color: Colors.blue, width: 2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.clear),
+                    onPressed: clearTextField,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  _textFieldFocusNode.unfocus();
+                },
+                child: Text('Add To-Do Item'),
+              ),
+            )
           ],
         ),
       ),
